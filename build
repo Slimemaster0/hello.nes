@@ -1,0 +1,2 @@
+#!/bin/sh
+cl65 sample.s --target nes --verbose -o sample.nes
