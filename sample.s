@@ -24,7 +24,17 @@ RESET:
     ldx #%1000000 ; Disable sound IRQ
     stx $4017
     ldx #$00
-    stx $4010    ; Disable PCM
+    stx $4010     ; Disable PCM
+
+    ; Initialize the stack
+    ldx #$FF
+    txs
+
+
+    ; Clear PPU registers
+    ldx #$00
+    stx $2000
+    stx $2001
 
     INFLOOP: 
 	jmp INFLOOP
