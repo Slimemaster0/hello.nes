@@ -17,6 +17,15 @@
 .segment "STARTUP"
 
 RESET:
+    SEI ; Disable Interupts
+    CLD ; Turn off decimal as its not supported on the NES
+
+
+    ldx #%1000000 ; Disable sound IRQ
+    stx $4017
+    ldx #$00
+    stx $4010    ; Disable PCM
+
     INFLOOP: 
 	jmp INFLOOP
 
