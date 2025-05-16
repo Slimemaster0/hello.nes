@@ -30,11 +30,15 @@ RESET:
     ldx #$FF
     txs
 
-
     ; Clear PPU registers
     ldx #$00
     stx $2000
     stx $2001
+
+    ; Wait for VBlank
+:
+    bit $2002
+    bpl :-
 
     ; Clear the memory
     txa
@@ -53,15 +57,7 @@ CLEARMEMORY: ; Clear the memory from $0000 to $07ff
     cpx #$00
     bne CLEARMEMORY
 
-    ; Wait for VBlank
-:
-    bit $2002
-    bpl :-
-
-    ; Setting sprite range
-    lda #$02
-    sta $4014
-
+    ; Prepair PPU for writting palette data.
     lda #$3f
     sta $2006
     lda #$00
@@ -75,34 +71,55 @@ LOADPALETTES:
     cpx #$20
     bne LOADPALETTES
 
+LOADBACKGROUND:
+    lda $2002 ; Read PPU status to reset high/low latch
+    lda #$21
+    sta $2006
+    lda #$01
+    sta $2006
     ldx #$00
-LOADSPRITES:
-    lda SPRITEDATA, x
-    sta $0200, x
+LOADBACKGROUND1:
+    lda BACKGROUNDDATA, x
+    sta $2007
     inx
-    cpx #$10	; 16 bytes ( 4 bytes pr sprite, 4 sprites total )
-    bne LOADSPRITES
+    cpx #$0d
+    bne LOADBACKGROUND1
+
+    ; Reset scroll
+    lda #$00
+    sta $2005
+    sta $2005
+
+    ; Enable Interupts
+    cli
+
+    lda #%10010000
+    sta $2000 		; When VBlank occurs call NMI
+
+    lda #%00011110 	; Show sprites and background
+    sta $2001
 
     INFLOOP: 
 	jmp INFLOOP
 
 NMI:
+
+    lda #$02 	; Load sprite range
+    sta $4014
+
     rti
 
 PALETTEDATA:
     .byte $00, $0F, $00, $10, 	$00, $0A, $15, $01, 	$00, $29, $28, $27, 	$00, $34, $24, $14 	; background palettes
     .byte $31, $0F, $15, $30, 	$00, $0F, $11, $30, 	$00, $0F, $30, $27, 	$00, $3C, $2C, $1C 	; sprite palettes
 
-SPRITEDATA:
-            ; Y    id   attr X
-	.byte $40, $00, $00, $40
-	.byte $40, $01, $00, $48
-	.byte $48, $10, $00, $40
-	.byte $48, $11, $00, $48
+BACKGROUNDDATA:
+    .byte $01, $02, $03, $03, $04, $00, $05, $04, $06, $03, $07, $08
     
 .segment "VECTORS"
     .word NMI
     .word RESET
 
 .segment "CHARS"
-.incbin "gfx.chr"
+.incbin "sprites.chr"
+.incbin "background.chr"
