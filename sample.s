@@ -75,7 +75,7 @@ LOADBACKGROUND:
     lda $2002 ; Read PPU status to reset high/low latch
     lda #$21
     sta $2006
-    lda #$01
+    lda #$ca
     sta $2006
     ldx #$00
 LOADBACKGROUND1:
